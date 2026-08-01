@@ -4,6 +4,7 @@ require("dotenv").config();
 require("../src/model/user.model");
 require("../src/model/student.model");
 require("../src/model/role.model");
+require("../src/model/permission.model");
 
 const PORT = process.env.PORT;
 

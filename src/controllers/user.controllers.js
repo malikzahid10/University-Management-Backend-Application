@@ -1,7 +1,8 @@
-const Role = require("../model/role.model");
 const User = require("../model/user.model");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const Role = require("../model/role.model");
+const Permission = require("../model/permission.model");
 require("dotenv").config();
 
 const userLogin = async (req, res) => {
@@ -9,7 +10,7 @@ const userLogin = async (req, res) => {
     const { email, password } = req.body;
     const user = await User.findOne({
       where: { email, isActive: true },
-      include: [Role],
+      include: { model: Role, include: { model: Permission } },
     });
     if (!user) {
       return res.status(401).json({
@@ -23,7 +24,17 @@ const userLogin = async (req, res) => {
       });
     }
 
-    const userRoles = user.Roles.map((role) => role.role);
+    const userRoles = [];
+
+    const userPermissions = [];
+
+    for (const role of user.Role) {
+      userRoles.push(role.role);
+
+      for (const permission of role.Permission) {
+        userPermissions.push(permission.permission);
+      }
+    }
 
     const token = jwt.sign(
       {
@@ -31,6 +42,7 @@ const userLogin = async (req, res) => {
         email: user.email,
         isActive: user.isActive,
         roles: userRoles,
+        permissions: userPermissions,
       },
       process.env.jwt_secret_key,
       { expiresIn: "12h" },
